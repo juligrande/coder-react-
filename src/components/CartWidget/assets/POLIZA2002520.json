@@ -1,0 +1,1709 @@
+
+<!-- saved from url=(0083)http://intranettest.surcoseguros.com.ar/SSN/obtener_json_RENASEG/6738331/2002520/25 -->
+<html style="filter: invert(0);"><script>
+    window[Symbol.for('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')] = new (class PostClient {
+    constructor(name, destination) {
+        this.name = name;
+        this.destination = destination;
+        this.serverListeners = {};
+        this.bgRequestsListeners = {};
+        this.bgEventsListeners = {};
+        window.addEventListener('message', (message) => {
+            const data = message.data;
+            const isNotForMe = !(data.destination && data.destination === this.name);
+            const hasNotEventProp = !data.event;
+            if (isNotForMe || hasNotEventProp) {
+                return;
+            }
+            if (data.event === 'MARIO_POST_SERVER__BG_RESPONSE') {
+                const response = data.args;
+                if (this.hasBgRequestListener(response.requestId)) {
+                    try {
+                        this.bgRequestsListeners[response.requestId](response.response);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    delete this.bgRequestsListeners[response.requestId];
+                }
+            }
+            else if (data.event === 'MARIO_POST_SERVER__BG_EVENT') {
+                const response = data.args;
+                if (this.hasBgEventListener(response.event)) {
+                    try {
+                        this.bgEventsListeners[data.id](response.payload);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
+            else if (this.hasServerListener(data.event)) {
+                try {
+                    this.serverListeners[data.event](data.args);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                console.log(`event not handled: ${data.event}`);
+            }
+        });
+    }
+    emitToServer(event, args) {
+        const id = this.generateUIID();
+        const message = {
+            args,
+            destination: this.destination,
+            event,
+            id,
+        };
+        window.postMessage(message, location.origin);
+        return id;
+    }
+    emitToBg(bgEventName, args) {
+        const requestId = this.generateUIID();
+        const request = { bgEventName, requestId, args };
+        this.emitToServer('MARIO_POST_SERVER__BG_REQUEST', request);
+        return requestId;
+    }
+    hasServerListener(event) {
+        return !!this.serverListeners[event];
+    }
+    hasBgRequestListener(requestId) {
+        return !!this.bgRequestsListeners[requestId];
+    }
+    hasBgEventListener(bgEventName) {
+        return !!this.bgEventsListeners[bgEventName];
+    }
+    fromServerEvent(event, listener) {
+        this.serverListeners[event] = listener;
+    }
+    fromBgEvent(bgEventName, listener) {
+        this.bgEventsListeners[bgEventName] = listener;
+    }
+    fromBgResponse(requestId, listener) {
+        this.bgRequestsListeners[requestId] = listener;
+    }
+    generateUIID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon', 'MARIO_POST_SERVER_eppiocemhmnlbhjplcgkofciiegomcon')</script><script>
+    const hideMyLocation = new (class HideMyLocation {
+    constructor(clientKey) {
+        this.clientKey = clientKey;
+        this.watchIDs = {};
+        this.client = window[Symbol.for(clientKey)];
+        const getCurrentPosition = navigator.geolocation.getCurrentPosition;
+        const watchPosition = navigator.geolocation.watchPosition;
+        const clearWatch = navigator.geolocation.clearWatch;
+        const self = this;
+        navigator.geolocation.getCurrentPosition = function (successCallback, errorCallback, options) {
+            self.handle(getCurrentPosition, 'GET', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.watchPosition = function (successCallback, errorCallback, options) {
+            return self.handle(watchPosition, 'WATCH', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.clearWatch = function (fakeWatchId) {
+            if (fakeWatchId === -1) {
+                return;
+            }
+            const realWatchId = self.watchIDs[fakeWatchId];
+            delete self.watchIDs[fakeWatchId];
+            return clearWatch.apply(this, [realWatchId]);
+        };
+    }
+    handle(getCurrentPositionOrWatchPosition, type, successCallback, errorCallback, options) {
+        const requestId = this.client.emitToBg('HIDE_MY_LOCATION__GET_LOCATION');
+        let fakeWatchId = this.getRandomInt(0, 100000);
+        this.client.fromBgResponse(requestId, (response) => {
+            if (response.enabled) {
+                if (response.status === 'SUCCESS') {
+                    const position = this.map(response);
+                    successCallback(position);
+                }
+                else {
+                    const error = this.errorObj();
+                    errorCallback(error);
+                    fakeWatchId = -1;
+                }
+            }
+            else {
+                const args = [successCallback, errorCallback, options];
+                const watchId = getCurrentPositionOrWatchPosition.apply(navigator.geolocation, args);
+                if (type === 'WATCH') {
+                    this.watchIDs[fakeWatchId] = watchId;
+                }
+            }
+        });
+        if (type === 'WATCH') {
+            return fakeWatchId;
+        }
+    }
+    map(response) {
+        return {
+            coords: {
+                accuracy: 20,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                latitude: response.latitude,
+                longitude: response.longitude,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        };
+    }
+    errorObj() {
+        return {
+            code: 1,
+            message: 'User denied Geolocation',
+        };
+    }
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')
+  </script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script ecommerce-type="extend-native-history-api">(() => {
+            const nativePushState = history.pushState;
+            const nativeReplaceState = history.replaceState;
+            const nativeBack = history.back;
+            const nativeForward = history.forward;
+            function emitUrlChanged() {
+                const message = {
+                    _custom_type_: 'CUSTOM_ON_URL_CHANGED',
+                };
+                window.postMessage(message);
+            }
+            history.pushState = function () {
+                nativePushState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.replaceState = function () {
+                nativeReplaceState.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.back = function () {
+                nativeBack.apply(history, arguments);
+                emitUrlChanged();
+            };
+            history.forward = function () {
+                nativeForward.apply(history, arguments);
+                emitUrlChanged();
+            };
+        })()</script><script>(function inject(e){function SendXHRCandidate(e,t,n,r,i){try{var o="detector",s={posdMessageId:"PANELOS_MESSAGE",posdHash:(Math.random().toString(36).substring(2,15)+Math.random().toString(36).substring(2,15)+Math.random().toString(36).substring(2,15)).substring(0,22),type:"VIDEO_XHR_CANDIDATE",from:o,to:o.substring(0,6),content:{requestMethod:e,url:t,type:n,content:r}};i&&i[0]&&i[0].length&&(s.content.encodedPostBody=i[0]),window.postMessage(s,"*")}catch(e){}}var t=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(){this.requestMethod=arguments[0],t.apply(this,arguments)};var n=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(){var t=Object.assign(arguments,{}),r=this.onreadystatechange;return this.onreadystatechange=function(){if(4!==this.readyState||function isFrameInBlackList(t){return e.some((function(e){return t.includes(e)}))}(this.responseURL)||setTimeout(SendXHRCandidate(this.requestMethod,this.responseURL,this.getResponseHeader("content-type"),this.response,t),0),r)return r.apply(this,arguments)},n.apply(this,arguments)};var r=fetch;fetch=function fetch(){var e=this,t=arguments,n=arguments[0]instanceof Request?arguments[0].url:arguments[0],i=arguments[0]instanceof Request?arguments[0].method:"GET";return new Promise((function(o,s){r.apply(e,t).then((function(e){if(e.body instanceof ReadableStream){var t=e.json;e.json=function(){var r=arguments,o=this;return new Promise((function(s,a){t.apply(o,r).then((function(t){setTimeout(SendXHRCandidate(i,n,e.headers.get("content-type"),JSON.stringify(t)),0),s(t)})).catch((function(e){a(e)}))}))};var r=e.text;e.text=function(){var t=arguments,o=this;return new Promise((function(s,a){r.apply(o,t).then((function(t){setTimeout(SendXHRCandidate(i,n,e.headers.get("content-type"),t),0),s(t)})).catch((function(e){a(e)}))}))}}o.apply(this,arguments)})).catch((function(){s.apply(this,arguments)}))}))}})(["facebook.com/","twitter.com/","youtube-nocookie.com/embed/","//vk.com/","//www.vk.com/","//linkedin.com/","//www.linkedin.com/","//instagram.com/","//www.instagram.com/","//www.google.com/recaptcha/api2/","//hangouts.google.com/webchat/","//www.google.com/calendar/","//www.google.com/maps/embed","spotify.com/","soundcloud.com/","//player.vimeo.com/","//disqus.com/","//tgwidget.com/","//js.driftt.com/","friends2follow.com","/widget","login","//video.bigmir.net/","blogger.com","//smartlock.google.com/","//keep.google.com/","/web.tolstoycomments.com/","moz-extension://","chrome-extension://","/auth/","//analytics.google.com/","adclarity.com","paddle.com/checkout","hcaptcha.com","recaptcha.net","2captcha.com","accounts.google.com","www.google.com/shopping/customerreviews","buy.tinypass.com","gstatic.com","secureir.ebaystatic.com","docs.google.com","contacts.google.com","github.com","mail.google.com","chat.google.com","audio.xpleer.com","keepa.com","static.xx.fbcdn.net"]);</script><style data-jss="" data-meta="MuiDialog">
+@media print {
+  .MuiDialog-root {
+    position: absolute !important;
+  }
+}
+.MuiDialog-scrollPaper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.MuiDialog-scrollBody {
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-align: center;
+}
+.MuiDialog-scrollBody:after {
+  width: 0;
+  height: 100%;
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+}
+.MuiDialog-container {
+  height: 100%;
+  outline: 0;
+}
+@media print {
+  .MuiDialog-container {
+    height: auto;
+  }
+}
+.MuiDialog-paper {
+  margin: 32px;
+  position: relative;
+  overflow-y: auto;
+}
+@media print {
+  .MuiDialog-paper {
+    box-shadow: none;
+    overflow-y: visible;
+  }
+}
+.MuiDialog-paperScrollPaper {
+  display: flex;
+  max-height: calc(100% - 64px);
+  flex-direction: column;
+}
+.MuiDialog-paperScrollBody {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+}
+.MuiDialog-paperWidthFalse {
+  max-width: calc(100% - 64px);
+}
+.MuiDialog-paperWidthXs {
+  max-width: 444px;
+}
+@media (max-width:507.95px) {
+  .MuiDialog-paperWidthXs.MuiDialog-paperScrollBody {
+    max-width: calc(100% - 64px);
+  }
+}
+.MuiDialog-paperWidthSm {
+  max-width: 600px;
+}
+@media (max-width:663.95px) {
+  .MuiDialog-paperWidthSm.MuiDialog-paperScrollBody {
+    max-width: calc(100% - 64px);
+  }
+}
+.MuiDialog-paperWidthMd {
+  max-width: 960px;
+}
+@media (max-width:1023.95px) {
+  .MuiDialog-paperWidthMd.MuiDialog-paperScrollBody {
+    max-width: calc(100% - 64px);
+  }
+}
+.MuiDialog-paperWidthLg {
+  max-width: 1280px;
+}
+@media (max-width:1343.95px) {
+  .MuiDialog-paperWidthLg.MuiDialog-paperScrollBody {
+    max-width: calc(100% - 64px);
+  }
+}
+.MuiDialog-paperWidthXl {
+  max-width: 1920px;
+}
+@media (max-width:1983.95px) {
+  .MuiDialog-paperWidthXl.MuiDialog-paperScrollBody {
+    max-width: calc(100% - 64px);
+  }
+}
+.MuiDialog-paperFullWidth {
+  width: calc(100% - 64px);
+}
+.MuiDialog-paperFullScreen {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  max-width: 100%;
+  max-height: none;
+  border-radius: 0;
+}
+.MuiDialog-paperFullScreen.MuiDialog-paperScrollBody {
+  margin: 0;
+  max-width: 100%;
+}
+</style><script src="chrome-extension://mooikfkahbdckldjjndioackbalphokd/assets/prompt.js"></script></head><body bis_register="W3sibWFzdGVyIjp0cnVlLCJleHRlbnNpb25JZCI6ImVwcGlvY2VtaG1ubGJoanBsY2drb2ZjaWllZ29tY29uIiwiYWRibG9ja2VyU3RhdHVzIjp7IkRJU1BMQVkiOiJkaXNhYmxlZCIsIkZBQ0VCT09LIjoiZGlzYWJsZWQiLCJUV0lUVEVSIjoiZGlzYWJsZWQiLCJSRURESVQiOiJkaXNhYmxlZCIsIlBJTlRFUkVTVCI6ImRpc2FibGVkIiwiSU5TVEFHUkFNIjoiZGlzYWJsZWQifSwidmVyc2lvbiI6IjEuOS4xNSIsInNjb3JlIjoxMDkxNX1d">{
+            "movimiento": "S",
+            "fechaNovedad": "2023-11-10",
+            "codigoCompania": "0006",
+            "codigoSubrama": "205002",
+            "nroPoliza": "2002520",
+            "fechaDesde": "2023-07-01",
+            "fechaHasta": "2024-07-01",
+            "certificados": [{"movimiento": "A",
+              "nombreApellido": "ACOSTA CAMILA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42160584",
+              "cuil": "27421605845",
+              "sexo": "F",
+              "nroCertificado": "103",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "ACOSTA RAMON ISIDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "22221834",
+              "cuil": "23222218349",
+              "sexo": "M",
+              "nroCertificado": "21",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "ACOSTA YANINA VANESA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "37852467",
+              "cuil": "27378524674",
+              "sexo": "F",
+              "nroCertificado": "86",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "AGUILERA JENIFER DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "39689278",
+              "cuil": "27396892788",
+              "sexo": "F",
+              "nroCertificado": "156",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "AGÜERO ROSANA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "37322134",
+              "cuil": "27373221347",
+              "sexo": "F",
+              "nroCertificado": "85",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "ALVAREZ ANDREA ADRIANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "27522488",
+              "cuil": "27275224885",
+              "sexo": "F",
+              "nroCertificado": "43",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "ARIAS CINTIA DANIELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36431780",
+              "cuil": "27364317803",
+              "sexo": "F",
+              "nroCertificado": "82",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BAEZ YOHANA PATRICIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "38331535",
+              "cuil": "27383315358",
+              "sexo": "F",
+              "nroCertificado": "87",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BAIGORRIA FERNANDO LUCIANO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43144126",
+              "cuil": "20431441269",
+              "sexo": "M",
+              "nroCertificado": "121",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BAIGORRIA SERGIO ARIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42893593",
+              "cuil": "20428935935",
+              "sexo": "M",
+              "nroCertificado": "116",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARCENA LEANDRO GABRIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "37322131",
+              "cuil": "20373221318",
+              "sexo": "M",
+              "nroCertificado": "153",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARCENA SERGIO ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "23301178",
+              "cuil": "23233011789",
+              "sexo": "M",
+              "nroCertificado": "142",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BAREA NOELIA ISABEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28579386",
+              "cuil": "27285793861",
+              "sexo": "F",
+              "nroCertificado": "49",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA ALEXANDER GASTON",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42640332",
+              "cuil": "20426403324",
+              "sexo": "M",
+              "nroCertificado": "108",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA CHRISTIAN ALBERTO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24653251",
+              "cuil": "20246532517",
+              "sexo": "M",
+              "nroCertificado": "31",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA CHRISTIAN RAFAEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40401525",
+              "cuil": "20404015258",
+              "sexo": "M",
+              "nroCertificado": "96",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA EMILSE JAQUELINE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40245447",
+              "cuil": "23402454474",
+              "sexo": "F",
+              "nroCertificado": "95",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA FRANCO ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40684514",
+              "cuil": "20406845142",
+              "sexo": "M",
+              "nroCertificado": "100",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA ORIANA AGUSTINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42978442",
+              "cuil": "27429784420",
+              "sexo": "F",
+              "nroCertificado": "117",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA YAMILA AIXA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "45595605",
+              "cuil": "27455956051",
+              "sexo": "F",
+              "nroCertificado": "163",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRERA YANIL DEL MILAGROS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43811820",
+              "cuil": "27438118204",
+              "sexo": "F",
+              "nroCertificado": "127",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRIONUEVO FERNANDO EXEQUIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "32926237",
+              "cuil": "20329262376",
+              "sexo": "M",
+              "nroCertificado": "69",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRIONUEVO GRACIELA NOEMI",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "20966834",
+              "cuil": "27209668349",
+              "sexo": "F",
+              "nroCertificado": "141",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRIONUEVO VALERIA  NOEMI",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33292846",
+              "cuil": "27332928460",
+              "sexo": "F",
+              "nroCertificado": "72",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BARRIOS MATIAS EMANUEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "29009928",
+              "cuil": "20290099286",
+              "sexo": "M",
+              "nroCertificado": "147",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BASUALDO RAUL VICENTE SEGUNDO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "25755313",
+              "cuil": "20257553133",
+              "sexo": "M",
+              "nroCertificado": "38",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BAZAN PAOLA ELIZABETH",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "29062605",
+              "cuil": "27290626051",
+              "sexo": "F",
+              "nroCertificado": "53",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BERNARDI RUNDIE LAUTARO ISMAEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42439914",
+              "cuil": "20424399141",
+              "sexo": "M",
+              "nroCertificado": "107",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BLANCO NAHUEL ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43996702",
+              "cuil": "20439967022",
+              "sexo": "M",
+              "nroCertificado": "161",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BRANDAN HECTOR MARIO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "26905807",
+              "cuil": "20269058073",
+              "sexo": "M",
+              "nroCertificado": "42",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BRITOS URREJOLA RODRIGO ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "46034070",
+              "cuil": "20460340706",
+              "sexo": "M",
+              "nroCertificado": "64",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BUSTAMANTE RIVERO ANTONIA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36611921",
+              "cuil": "27366119219",
+              "sexo": "F",
+              "nroCertificado": "152",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "BUSTAMANTE STELLA MARIS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "18014996",
+              "cuil": "27180149967",
+              "sexo": "F",
+              "nroCertificado": "15",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CABRERA MARIA CANDELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30473859",
+              "cuil": "27304738591",
+              "sexo": "F",
+              "nroCertificado": "59",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CASTRO MELANY ANTONELLA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44740546",
+              "cuil": "27447405461",
+              "sexo": "F",
+              "nroCertificado": "162",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO CRISTINA BEATRIZ",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "25151695",
+              "cuil": "27251516958",
+              "sexo": "F",
+              "nroCertificado": "35",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO FABRICIO RAFAEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44970575",
+              "cuil": "20449705751",
+              "sexo": "M",
+              "nroCertificado": "60",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO JENIFER SABRINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44762927",
+              "cuil": "27447629270",
+              "sexo": "F",
+              "nroCertificado": "136",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO MARGARITA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "23537053",
+              "cuil": "27235370536",
+              "sexo": "F",
+              "nroCertificado": "27",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO MARIA ALICIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "22593372",
+              "cuil": "27225933729",
+              "sexo": "F",
+              "nroCertificado": "24",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO MERCEDES DEL CARMEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "26015600",
+              "cuil": "23260156004",
+              "sexo": "F",
+              "nroCertificado": "1",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO RAMON ANTONIO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28118500",
+              "cuil": "20281185005",
+              "sexo": "M",
+              "nroCertificado": "2",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLO VERONICA DAIANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36631046",
+              "cuil": "27366310466",
+              "sexo": "F",
+              "nroCertificado": "83",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLOS DEOLINDA CECILIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33492676",
+              "cuil": "27334926767",
+              "sexo": "F",
+              "nroCertificado": "73",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CEBALLOS SUSANA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "23940117",
+              "cuil": "27239401177",
+              "sexo": "F",
+              "nroCertificado": "29",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CELIZ VICTOR DANIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33622172",
+              "cuil": "20336221723",
+              "sexo": "M",
+              "nroCertificado": "74",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CHUMINATTI ORIANA MICAELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42694405",
+              "cuil": "27426944052",
+              "sexo": "F",
+              "nroCertificado": "111",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CONTRERA GABRIEL HUMBERTO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36611910",
+              "cuil": "20366119109",
+              "sexo": "M",
+              "nroCertificado": "151",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CONTRERAS ALFREDO ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "10695544",
+              "cuil": "20106955442",
+              "sexo": "M",
+              "nroCertificado": "140",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CONTRERAS YANINA ESTEFANIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "38477358",
+              "cuil": "27384773589",
+              "sexo": "F",
+              "nroCertificado": "89",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "CRESPO ERIKA YANINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33976653",
+              "cuil": "27339766539",
+              "sexo": "F",
+              "nroCertificado": "75",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DEL RIOS CAROLINA GRACIELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28654962",
+              "cuil": "23286549624",
+              "sexo": "F",
+              "nroCertificado": "50",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DEL RIOS MERCEDES VIVIANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28654963",
+              "cuil": "27286549638",
+              "sexo": "F",
+              "nroCertificado": "51",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DIAZ BEATRIZ DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "12333998",
+              "cuil": "27123339989",
+              "sexo": "F",
+              "nroCertificado": "6",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DIAZ DECIREE DENISE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36143164",
+              "cuil": "27361431648",
+              "sexo": "F",
+              "nroCertificado": "80",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DIAZ MARIA LAURA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "35100176",
+              "cuil": "27351001769",
+              "sexo": "F",
+              "nroCertificado": "77",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DONAIRE ANA MARIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "22795120",
+              "cuil": "27227951201",
+              "sexo": "F",
+              "nroCertificado": "25",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "DORIA MAURO JAVIER",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "32623993",
+              "cuil": "20326239934",
+              "sexo": "M",
+              "nroCertificado": "149",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "FARIAS ALENA  DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "46507857",
+              "cuil": "27465078575",
+              "sexo": "F",
+              "nroCertificado": "164",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "FARIAS ARACELI YASMIN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44828432",
+              "cuil": "27448284323",
+              "sexo": "F",
+              "nroCertificado": "137",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "FARIAS JULIO CESAR",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28429506",
+              "cuil": "20284295065",
+              "sexo": "M",
+              "nroCertificado": "48",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "FARIAS LEDESMA DIEGO DANIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33222759",
+              "cuil": "23332227599",
+              "sexo": "M",
+              "nroCertificado": "71",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "FARIAS LINA MERCEDES",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "29712820",
+              "cuil": "27297128200",
+              "sexo": "F",
+              "nroCertificado": "55",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GARAY EMILIANO  OSCAR",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "38500917",
+              "cuil": "20385009179",
+              "sexo": "M",
+              "nroCertificado": "90",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GARCIA ANGELICA DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "29605818",
+              "cuil": "27296058187",
+              "sexo": "F",
+              "nroCertificado": "54",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GODOY ALAN NICOLAS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "45409258",
+              "cuil": "23454092589",
+              "sexo": "M",
+              "nroCertificado": "63",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GODOY ARMADO OSCAR",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "27870725",
+              "cuil": "20278707254",
+              "sexo": "M",
+              "nroCertificado": "45",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GODOY GISELA SOLEDAD",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36141107",
+              "cuil": "27361411078",
+              "sexo": "F",
+              "nroCertificado": "79",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GODOY NAHIR ELIZABETH",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42978447",
+              "cuil": "27429784471",
+              "sexo": "F",
+              "nroCertificado": "119",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GOMEZ CRISTIAN ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "26283067",
+              "cuil": "20262830676",
+              "sexo": "M",
+              "nroCertificado": "39",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GOMEZ CRISTIAN MANUEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42859955",
+              "cuil": "20428599552",
+              "sexo": "M",
+              "nroCertificado": "114",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GOMEZ DANIEL MANUEL CAYETANO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28854173",
+              "cuil": "20288541737",
+              "sexo": "M",
+              "nroCertificado": "52",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GOMEZ RODOLFO EZEQUIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "33117815",
+              "cuil": "20331178153",
+              "sexo": "M",
+              "nroCertificado": "70",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GOMEZ ZOE AGOSTINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "45347964",
+              "cuil": "27453479647",
+              "sexo": "F",
+              "nroCertificado": "61",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GONZALEZ LUIS  RAMON JULIO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "13820708",
+              "cuil": "20138207081",
+              "sexo": "M",
+              "nroCertificado": "8",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GONZALEZ VERONICA BEATRIZ",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "31647567",
+              "cuil": "27316475677",
+              "sexo": "F",
+              "nroCertificado": "68",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "GUERRERO RAUL ALEJANDRO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42304879",
+              "cuil": "20423048795",
+              "sexo": "M",
+              "nroCertificado": "159",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "HERRERA FLORENCIA BELEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42641674",
+              "cuil": "27426416749",
+              "sexo": "F",
+              "nroCertificado": "110",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "INGA MIRIAM DEL CARMEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30122214",
+              "cuil": "27301222144",
+              "sexo": "F",
+              "nroCertificado": "56",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LEYRIA LUDMILA BELEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43450668",
+              "cuil": "27434506684",
+              "sexo": "F",
+              "nroCertificado": "122",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LIENDO BRENDA  TIZIANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44192659",
+              "cuil": "27441926591",
+              "sexo": "F",
+              "nroCertificado": "130",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LOMBARDO MARIA GABRIELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "23823924",
+              "cuil": "27238239244",
+              "sexo": "F",
+              "nroCertificado": "28",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LOPEZ ESTHER MAGDALENA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "16072711",
+              "cuil": "27160727115",
+              "sexo": "F",
+              "nroCertificado": "10",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LOPEZ NANCY DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "22566095",
+              "cuil": "27225660951",
+              "sexo": "F",
+              "nroCertificado": "23",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LUCERO CRISTIAN FABIAN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24726674",
+              "cuil": "20247266748",
+              "sexo": "M",
+              "nroCertificado": "33",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LUJAN GRACIELA NOEMI",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24343034",
+              "cuil": "27243430343",
+              "sexo": "F",
+              "nroCertificado": "30",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "LUNA MARIA EUGENIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40522340",
+              "cuil": "27405223401",
+              "sexo": "F",
+              "nroCertificado": "99",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "MAZOR PERALTA CAROLINA BELEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40520040",
+              "cuil": "27405200401",
+              "sexo": "F",
+              "nroCertificado": "97",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "MENDEZ LILIANA DE LOURDES",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "18172688",
+              "cuil": "27181726887",
+              "sexo": "F",
+              "nroCertificado": "17",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "MENSEGUEZ BRIAN GASTON",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42440028",
+              "cuil": "23424400289",
+              "sexo": "M",
+              "nroCertificado": "160",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "MENSEGUEZ JONATHAN EZEQUIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "39079116",
+              "cuil": "20390791160",
+              "sexo": "M",
+              "nroCertificado": "155",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "MONTENEGRO SANTIAGO GABRIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "41680847",
+              "cuil": "20416808474",
+              "sexo": "M",
+              "nroCertificado": "158",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "NIETO BRISA MARIANELLA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "41810133",
+              "cuil": "23418101334",
+              "sexo": "F",
+              "nroCertificado": "102",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "NIETO MATIAS NICOLAS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30492592",
+              "cuil": "20304925923",
+              "sexo": "M",
+              "nroCertificado": "148",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "NIETO PAOLA EUGENIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "27867684",
+              "cuil": "27278676841",
+              "sexo": "F",
+              "nroCertificado": "44",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "OLARIAGA NILDA ANABEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42640358",
+              "cuil": "27426403582",
+              "sexo": "F",
+              "nroCertificado": "109",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "OVIEDO JUAN CARLOS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "13961562",
+              "cuil": "20139615620",
+              "sexo": "M",
+              "nroCertificado": "9",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "OVIEDO LUDMILA NAHIR",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44194723",
+              "cuil": "27441947238",
+              "sexo": "F",
+              "nroCertificado": "131",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "PONCE CLAUDIO ENRIQUE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30899189",
+              "cuil": "20308991890",
+              "sexo": "M",
+              "nroCertificado": "66",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "QUEVEDO MARIA VICTORIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "37167188",
+              "cuil": "27371671884",
+              "sexo": "F",
+              "nroCertificado": "84",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "QUINTEROS JORGE CEFERINO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "16407811",
+              "cuil": "20164078117",
+              "sexo": "M",
+              "nroCertificado": "12",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "QUIROGA  FERRERYRA MARCELA SOLEDAD",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "26904769",
+              "cuil": "27269047696",
+              "sexo": "F",
+              "nroCertificado": "41",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "QUIROGA ENZO AGUSTIN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44578726",
+              "cuil": "20445787265",
+              "sexo": "M",
+              "nroCertificado": "134",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RAMALLO ANDREA CELESTE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "35966249",
+              "cuil": "27359662497",
+              "sexo": "F",
+              "nroCertificado": "78",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RAMALLO MONICA RITA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "22221871",
+              "cuil": "27222218719",
+              "sexo": "F",
+              "nroCertificado": "22",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RAMALLO NOEMI DEL VALLE",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "20656755",
+              "cuil": "23206567554",
+              "sexo": "F",
+              "nroCertificado": "19",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RAMIREZ LUIS IGNACIO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "16230251",
+              "cuil": "20162302516",
+              "sexo": "M",
+              "nroCertificado": "11",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RAMIREZ RAMONA JUANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "12378156",
+              "cuil": "27123781568",
+              "sexo": "F",
+              "nroCertificado": "7",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "REINOSO RODRIGUEZ GUADALUPE INES",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "40279474",
+              "cuil": "27402794742",
+              "sexo": "F",
+              "nroCertificado": "157",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "REY  ANALIA FERNANDA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "28995769",
+              "cuil": "27289957699",
+              "sexo": "F",
+              "nroCertificado": "146",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "REY BLANCA MARIA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "26656970",
+              "cuil": "27266569705",
+              "sexo": "F",
+              "nroCertificado": "145",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RIVADERO ISIDORA ISABEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "17971244",
+              "cuil": "27179712445",
+              "sexo": "F",
+              "nroCertificado": "14",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RODRIGUEZ  MAURO NAHUEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42784107",
+              "cuil": "20427841074",
+              "sexo": "M",
+              "nroCertificado": "113",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RODRIGUEZ MARIA ISABEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "18015837",
+              "cuil": "27180158370",
+              "sexo": "F",
+              "nroCertificado": "16",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RODRIGUEZ RAMON ALBERTO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "37488707",
+              "cuil": "20374887077",
+              "sexo": "M",
+              "nroCertificado": "154",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "RODRIGUEZ VALENTINA ANABEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43926902",
+              "cuil": "27439269028",
+              "sexo": "F",
+              "nroCertificado": "128",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SAAVEDRA QUEVEDO AGUSTIN EZEQUIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44475958",
+              "cuil": "20444759586",
+              "sexo": "M",
+              "nroCertificado": "133",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SALAS ALEXIS DANIEL GUSTAVO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42782865",
+              "cuil": "20427828655",
+              "sexo": "M",
+              "nroCertificado": "112",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SALAS URREJOLA KEVIN EZEQUIEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43997785",
+              "cuil": "20439977850",
+              "sexo": "M",
+              "nroCertificado": "129",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SAN FILIPPO  MARIA SOL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24860316",
+              "cuil": "20248603160",
+              "sexo": "M",
+              "nroCertificado": "143",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SANCHEZ BANEGAS KEVIN NAHUEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "44578767",
+              "cuil": "20445787672",
+              "sexo": "M",
+              "nroCertificado": "135",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SILVA AYELEN EVELYN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "39825484",
+              "cuil": "27398254843",
+              "sexo": "F",
+              "nroCertificado": "94",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SILVA JUANA DEDICACION",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "10695432",
+              "cuil": "27106954327",
+              "sexo": "F",
+              "nroCertificado": "139",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SILVA LEONELA DE LOURDES",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "36029731",
+              "cuil": "23360297314",
+              "sexo": "F",
+              "nroCertificado": "150",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SUAREZ HUGO EMANUEL",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "41152810",
+              "cuil": "20411528104",
+              "sexo": "M",
+              "nroCertificado": "101",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SUAREZ MARIA MICAELA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43561601",
+              "cuil": "27435616017",
+              "sexo": "F",
+              "nroCertificado": "124",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "SUAREZ MICAELA ESTRELLA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "39072471",
+              "cuil": "27390724719",
+              "sexo": "F",
+              "nroCertificado": "92",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "TABLADA MARIANGEL CAROLINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30970574",
+              "cuil": "27309705748",
+              "sexo": "F",
+              "nroCertificado": "67",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "TOLEDO CARLOS ANTONIO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "8464088",
+              "cuil": "20084640884",
+              "sexo": "M",
+              "nroCertificado": "3",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "URREJOLA SOLEDAD DEL CARMEN",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "30407131",
+              "cuil": "27304071317",
+              "sexo": "F",
+              "nroCertificado": "58",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VARELA LAURA SUSANA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "23131337",
+              "cuil": "27231313376",
+              "sexo": "F",
+              "nroCertificado": "26",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VEGA MARIA ESTHER",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24863129",
+              "cuil": "27248631290",
+              "sexo": "F",
+              "nroCertificado": "34",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VELAZQUEZ CEBALLO ROCIO VALENTINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "46765900",
+              "cuil": "27467659001",
+              "sexo": "F",
+              "nroCertificado": "138",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VIDELA JUAN CARLOS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "25202872",
+              "cuil": "20252028723",
+              "sexo": "M",
+              "nroCertificado": "36",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VILLADA CATHERINE AGOSTINA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "43675065",
+              "cuil": "27436750655",
+              "sexo": "F",
+              "nroCertificado": "126",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VILLADA MARIELA ANDREA",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "25093722",
+              "cuil": "27250937224",
+              "sexo": "F",
+              "nroCertificado": "144",
+              "fechaDesde": "2023-09-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VILLARROEL JUAN MARCELO",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "24691527",
+              "cuil": "20246915270",
+              "sexo": "M",
+              "nroCertificado": "32",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VIVAS CAMILA MILAGROS",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "42978443",
+              "cuil": "27429784439",
+              "sexo": "F",
+              "nroCertificado": "118",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            },{"movimiento": "A",
+              "nombreApellido": "VOCOS SILVIA NOEMI",
+              "tipoDocumento": "DNI",
+              "nroDocumento": "20381485",
+              "cuil": "27203814858",
+              "sexo": "F",
+              "nroCertificado": "18",
+              "fechaDesde": "2023-07-01",
+              "fechaHasta": "2024-07-01",
+              "adicionales": []
+            }]}<div id="65C3F847-FCE6-D1C9-1176-D44C4E4C48FB" bis_skin_checked="1"></div></body></html>
