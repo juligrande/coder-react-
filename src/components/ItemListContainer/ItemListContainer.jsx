@@ -1,10 +1,7 @@
-const ItemListContainer = ({greeting}) =>{
-    return (
-        <div>
-            <h1>{greeting}</h1>
-        </div>
-    )
+import { useState, useEffect } from "react"
+import { getProducts } from "../../asyncMock"
+import Itemlist from "../ItemList/ItemList"
 
-}
+const ItemListContainer
 
 export default ItemListContainer
