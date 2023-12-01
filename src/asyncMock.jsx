@@ -9,16 +9,24 @@ const products = [
         category: 'celular',
         img: iphoneImage,
         stock: '25',
-        description: 'Descripcion Iphone 12'
+        description: 'Iphone 12 de buena calidad, Marca Apple'
     },
-    { id: '2', name: 'Samsung S21', price: 800, category: 'celular', img: samsungImage},
-    { id: '3', name: 'Ipad SE', price: 1300, category: 'tablet', img: ipadImage}
+    { id: '2', name: 'Samsung S21', price: 800, category: 'celular',img: samsungImage, description: 'el Samsung S21 tiene mucha resistencia y muy buena camara integrada'},
+    { id: '3', name: 'Ipad SE', price: 1300, category: 'tablet', img: ipadImage, description: 'El IPAD tiene una pantalla muy grande esencial para ver peliculas'}
 ]
 
 export const getProducts = () => {
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve(products)
+        }, 500);
+    })
+}
+
+export const getProductById = (productId) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(products.find(prod => prod.id === productId))
         }, 500);
     })
 }

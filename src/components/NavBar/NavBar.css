@@ -1,0 +1,12 @@
+.Option{
+    padding: 20px;
+    border: 2px solid white;
+    background-color: black;
+    border-radius: 10px;
+}
+.Option:hover{
+    background-color: white;
+}
+.titulo{
+    font-size: 40px;
+}

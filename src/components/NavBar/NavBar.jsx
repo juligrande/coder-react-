@@ -1,20 +1,31 @@
-import { NavLink, Link } from "react-router-dom"
-import CartWidget from "../CartWidget/CartWidget"
+// NavBar.jsx
+import { NavLink, Link } from "react-router-dom";
+import './NavBar.css';
+import CartWidget from "../CartWidget/CartWidget";
 
 const NavBar = () => {
-    return (
-        <nav className="NavBar">
-            <Link to='/'>
-                <h3>Ecommerce - Juligrande</h3>
-            </Link>
-            <div className="Categories">
-                <NavLink to={`/category/celular`} className={({ isActive }) => isActive ? 'ActiveOption' : 'Option'}>Celular</NavLink>
-                <NavLink to={`/category/tablet`} className={({ isActive }) => isActive ? 'ActiveOption' : 'Option'}>Tablets</NavLink>
-                <NavLink to={`/category/notebook`} className={({ isActive }) => isActive ? 'ActiveOption' : 'Option'}>Notebooks</NavLink>
-            </div>
-            <CartWidget/>
-        </nav>
-    )
-}
+  return (
+    <nav className="NavBar">
+      <Link to='/'>
+        <h1 className="titulo">Ecommerce - Juligrande</h1>
+      </Link>
+      <div className="Categories">
+        <NavLink to='/' end className="Option">
+          Inicio
+        </NavLink>
+        <NavLink to='/item/1' className="Option">
+          Iphone 12
+        </NavLink>
+        <NavLink to='/item/2' className="Option">
+          Samsung S21
+        </NavLink>
+        <NavLink to='/item/3' className="Option">
+          Ipad
+        </NavLink>
+      </div>
+      <CartWidget />
+    </nav>
+  );
+};
 
-export default NavBar
+export default NavBar;
