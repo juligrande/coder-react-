@@ -1,6 +1,18 @@
 .ItemHeader {
   font-size: 18px;
+  padding: 15px;
 }
 p{
   font-size: 20px;
+}
+.Option{
+  margin: 10px;
+}
+.ItemFooter{
+  padding: 15px;
+
+}
+.ItemIng{
+  width: 170px;
+  height: 240px;
 }

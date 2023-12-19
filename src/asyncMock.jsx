@@ -1,6 +1,6 @@
 import iphoneImage from './imgs/Iphone 12.webp';
 import samsungImage from './imgs/Samsung S21.webp';
-import ipadImage from './imgs/Ipad SE.jpg';
+import ipadImage from './imgs/Ipad SE.gif';
 const products = [
     {
         id: '1',
