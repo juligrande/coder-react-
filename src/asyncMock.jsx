@@ -8,11 +8,11 @@ const products = [
         price: '1000',
         category: 'celular',
         img: iphoneImage,
-        stock: '25',
+        stock: 25,
         description: 'Iphone 12 de buena calidad, Marca Apple'
     },
-    { id: '2', name: 'Samsung S21', price: 800, category: 'celular',img: samsungImage, description: 'el Samsung S21 tiene mucha resistencia y muy buena camara integrada'},
-    { id: '3', name: 'Ipad SE', price: 1300, category: 'tablet', img: ipadImage, description: 'El IPAD tiene una pantalla muy grande esencial para ver peliculas'}
+    { id: '2', name: 'Samsung S21', price: 800, category: 'celular',img: samsungImage,stock:30,description: 'el Samsung S21 tiene mucha resistencia y muy buena camara integrada'},
+    { id: '3', name: 'Ipad SE', price: 1300, category: 'tablet', img: ipadImage,stock:22,description: 'El IPAD tiene una pantalla muy grande esencial para ver peliculas'}
 ]
 
 export const getProducts = () => {
