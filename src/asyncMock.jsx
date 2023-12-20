@@ -1,11 +1,11 @@
 import iphoneImage from './imgs/Iphone 12.webp';
 import samsungImage from './imgs/Samsung S21.webp';
-import ipadImage from './imgs/Ipad SE.gif';
+import ipadImage from './imgs/Ipad SE.jpg';
 const products = [
     {
         id: '1',
         name: 'Iphone 12',
-        price: '1000',
+        price: 1000,
         category: 'celular',
         img: iphoneImage,
         stock: 25,

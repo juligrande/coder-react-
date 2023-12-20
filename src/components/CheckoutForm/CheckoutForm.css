@@ -1,0 +1,13 @@
+.Form{
+    border: 3px solid white;
+    padding: 20px;
+}
+.Label{
+    color: white;
+
+}
+.Input{
+    padding: 10px;
+    margin: 40px;
+    color: white;
+}

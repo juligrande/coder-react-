@@ -1,12 +1,21 @@
 .Option{
     padding: 20px;
     border: 2px solid white;
-    background-color: black;
+    background-color: #2c6cbf;
     border-radius: 10px;
 }
 .Option:hover{
-    background-color: white;
+    background-color: rgb(12, 12, 12);
+    color: white;
+
 }
+
 .titulo{
     font-size: 40px;
+}
+
+.carrito{
+    position: relative;
+    padding-left: 10px;
+    top: 15px;
 }

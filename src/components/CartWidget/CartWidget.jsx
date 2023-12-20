@@ -1,17 +1,17 @@
-import { useContext } from "react"
-import carrito from "./assets/carrito.svg"
-import CartContext from "../CartContext/CartContext"
-import { Link } from "react-router-dom"
+import { useContext } from "react";
+import carrito from "./assets/carrito.svg";
+import CartContext from "../CartContext/CartContext";
+import { Link } from "react-router-dom";
 
 const CartWidget = () => {
-    const { totalQuantity } = useContext(CartContext)
+  const { totalQuantity } = useContext(CartContext);
 
-    return (
-        <Link to='/cart' className="CartWidget" style={{ display: totalQuantity > 0 ? 'block' : 'none'}}>
-            <img className='CartImg'src={carrito} alt="Cart-Widget" />
-            { totalQuantity }
-        </Link>
-    )
-}
+  return (
+    <Link to='/cart' className="CartWidget" style={{ display: totalQuantity > 0 ? 'block' : 'none'}}>
+      <img className='CartImg' src={carrito} alt="Cart-Widget" />
+      { totalQuantity }
+    </Link>
+  );
+};
 
-export default CartWidget
+export default CartWidget;

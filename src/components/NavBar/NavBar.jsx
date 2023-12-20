@@ -22,6 +22,9 @@ const NavBar = () => {
         <NavLink to='/item/3' className="Option">
           Ipad
         </NavLink>
+        <NavLink to='/cart'>
+          <img src="/src/components/CartWidget/assets/carrito.svg" alt="carrito" className="carrito"/>
+        </NavLink>
       </div>
       <CartWidget />
     </nav>
