@@ -1,91 +1,59 @@
-import { useContext, useState } from "react";
-import { db } from "../../firebase/client";
+import React, { useContext, useState } from "react";
+import { Timestamp, writeBatch, getDocs, query, where } from "firebase/firestore";
 import CartContext from "../CartContext/CartContext";
+import { db } from "../../firebase/client";
 import { addDoc, collection, documentId } from "firebase/firestore";
 import CheckoutForm from "../CheckoutForm/CheckoutForm";
 
+const CartItem = ({ product }) => {
+  return (
+    <div>
+      <p>{product.name} - Cantidad: {product.quantity} - Precio: ${product.price}</p>
+    </div>
+  );
+};
+
 const Checkout = () => {
-    const [loading,setLoading] = useState(false)
-    const [orderId, setOrderId] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  const { cart, clearCart } = useContext(CartContext);
 
-    const { cart, total, clearCart } = useContext(CartContext)
+  const createOrder = async ({ name, phone, email }) => {
+    setLoading(true);
 
-    const createOrder = async ({ name,phone, email }) => {
-        setLoading(true)
+    try {
+      const objOrder = {
+        buyer: {
+          name,
+          phone,
+          email
+        },
+        items: cart,
+      };
 
-        try{
-            const objOrder = {
-                buyer: {
-                    name,phone,email
-                },
-                items: cart,
-                total: total,
-                date: Timestamp.fromDate(new Date())
-            }
 
-            const batch = writeBatch(db)
+      setOrderId("DAhds8232732hJHDSHJ"); 
 
-            const outOfStock = []
-
-            const ids = cart.map(prod => prod.id)
-
-            const productsRef = collection(db,'products')
-
-            const productsAddedFromFirestore = await getDocs(query(productsRef, where(documentId(), 'in', ids)))
-
-            const { docs } = productsAddedFromFirestore
-
-            docs.forEach(doc => {
-                const dataDoc = doc.data()
-                const stockDb = dataDoc.stock
-
-                const productAddedToCart = cart.find(prod => prod.id === doc.id)
-                const prodQuantity = productAddedToCart?.quantity
-
-                if(stockDb >= prodQuantity) {
-                    batch.update(doc.ref, {stock: stockDb - prodQuantity })
-                } else {
-                    outOfStock.push({ id: doc.id, ...dataDoc})
-                }
-            })
-
-            if(outOfStock.length === 0) {
-                await batch.commit()
-
-                const orderRef = collection(db,'orders')
-
-                const orderAdded = await addDoc(orderRef, objOrder)
-
-                setOrderId(orderAdded.id)
-                clearCart()
-            } else {
-                console.error('hay productos que estan fuera de stock')
-            }          
-        }
-        catch (error) {
-            console.log(error);
-        } finally {
-            setLoading(false);
-        }
-        
-        
-        
+      clearCart();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
-    if (loading) {
-        return <h1>Se esta generando su orden...</h1>
-    }
+  };
 
-    if (orderId) {
-        return <h1>El id de su orden es: {orderId}</h1>
-    }
+  return (
+    <div>
+      <h1>Checkout</h1>
+      <CheckoutForm onConfirm={createOrder} />  
 
-    return (
-        <div>
-            <h1>Checkout</h1>
-            <CheckoutForm onConfirm={createOrder}/>
-        </div>
-    )
-    
-}
+      {cart.map(product => (
+        <CartItem key={product.id} product={product} />
+      ))}
 
-export default Checkout
+      <p>Total: ${cart.reduce((total, product) => total + product.price * product.quantity, 0)}</p>
+    </div>
+  );
+};
+
+export default Checkout;
